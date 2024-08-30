@@ -1,3 +1,4 @@
+const { ValidationError } = require("sequelize");
 const { Player } = require("../db/sequelize");
 
 exports.findAllPlayers = async (req, res) => {
@@ -24,22 +25,44 @@ exports.createPlayer = async (req, res) => {
     attributs_Physiques,
     attributs_Techniques,
   } = req.body;
-  const newPlayer = await Player.create({ ...req.body });
-  res.json(newPlayer);
+  const newPlayer = await Player.create({ ...req.body })
+    .then((newPlayer) => {
+      console.log(req.body);
+      
+      res.json({ data: newPlayer });
+    })
+    .catch((error) => {
+      if (error instanceof ValidationError) {
+        return res
+          .status(401)
+          .json({ message: error.errors.map((err) => err.message) });
+      }
+      const message = "Impossible de creé le joueur, Réessayez dans un instant";
+      res.status(500).json({ message, data: error });
+    });
 };
 
 exports.updatePlayer = async (req, res) => {
   const id = req.params.id;
-  Player.update(req.body, { where: { id: id } })
-    .then((_) => {
-      return Player.findByPk(id).then((player) => {
-        if (!player) {
-          return res.status(401).json({ message: "joueur introuvable" });
-        }
-        res.json({ data: player });
+  try {
+    const [updatedRows] = await Player.update(req.body, { where: { id: id } });
+    if (updatedRows === 0) {
+      return res.status(404).json({
+        message: "Joueur introuvable ou vous avez appotez aucune modificaion",
       });
-    })
-    .catch((err) => {});
+    }
+    const player = await Player.findByPk(id);
+    res.json({ data: player });
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res
+        .status(400)
+        .json({ message: error.errors.map((err) => err.message) });
+    }
+    const message =
+      "Impossible de modifier le joueur, Réessayez dans un instant";
+    res.status(500).json({ message, data: error });
+  }
 };
 
 exports.deletePlayer = (req, res) => {
@@ -53,5 +76,9 @@ exports.deletePlayer = (req, res) => {
         res.json({ message: `le joueur ${player.nom} bien été supprimer` });
       });
     })
-    .catch((err) => {});
+    .catch((error) => {
+      const message =
+        "Impossible de supprimer le joueur, Réessayez dans un instant";
+      res.status(500).json({ message, data: error });
+    });
 };

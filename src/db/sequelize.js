@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize } = require("sequelize");
 const playerModels = require("../models/player");
 const { player } = require("./player");
 
@@ -14,8 +14,10 @@ const initDb = async () => {
     await sequelize.authenticate();
     console.log("Connection has been established successfully.");
     await sequelize.sync({ force: true });
-    player.map((player) => {
-      Player.create(player).then((player) => console.log(player.toJSON()));
+    player.map(async (player) => {
+      await Player.create(player).then((player) =>
+        console.log(player.toJSON())
+      );
     });
   } catch (error) {
     console.error("Unable to connect to the database:", error);
