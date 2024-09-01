@@ -17,24 +17,30 @@ module.exports = (sequelize) => {
           notEmpty: { msg: "Le champ note est require" },
           isNumeric: { msg: "Le champ note n'autorise que les nombres" },
         },
+        get() {
+          return CalculNote(
+            this.attributs_Physiques,
+            this.attributs_Techniques
+          );
+        },
       },
-      nom: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "Le champ nom est require" },
+          notEmpty: { msg: "Le champ name est require" },
           notNumber(value) {
             const regex = /\d/;
             if (regex.test(value)) {
-              throw new Error("Le nom ne peut pas contenir de chiffre");
+              throw new Error("Le name ne peut pas contenir de chiffre");
             }
           },
         },
         set(value) {
           if (typeof value === "string") {
-            this.setDataValue("nom", Capitalize(value.trim()));
+            this.setDataValue("name", Capitalize(value.trim()));
           } else {
-            this.setDataValue("nom", "");
+            this.setDataValue("name", "");
           }
         },
       },
@@ -103,10 +109,22 @@ module.exports = (sequelize) => {
       attributs_Physiques: {
         type: DataTypes.JSON,
         allowNull: true,
+        validate: {
+          isValidAttributs(value) {
+            const keys = ["agilite", "endurance", "force", "vitesse"];
+            ValideAttributes(value, keys, "Techniques");
+          },
+        },
       },
       attributs_Techniques: {
         type: DataTypes.JSON,
         allowNull: true,
+        validate: {
+          isValideAttributs(value) {
+            const keys = ["controle_de_balle", "dribble", "passes", "tir"];
+            ValideAttributes(value, keys, "Physiques");
+          },
+        },
       },
     },
     {
@@ -116,7 +134,43 @@ module.exports = (sequelize) => {
     }
   );
 };
+// Helper function
+
+// ValideAttributs function
+function ValideAttributes(value, keys, type) {
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`Les attributs ${type} doivent être un objet valide.`);
+  }
+  const valid = keys.every(
+    (key) =>
+      value.hasOwnProperty(key) &&
+      typeof value[key] === "number" &&
+      value[key] >= 0 &&
+      value[key] <= 10
+  );
+  if (!valid) {
+    throw new Error(
+      `Les attributs ${type} ne sont pas valides. Les clés attendues sont : ${keys.join(
+        ", "
+      )} avec des valeurs entre 0 et 10.`
+    );
+  }
+}
+
+// function calculnote
+function CalculNote(attributsPhy, attributsTec) {
+  const sumattPhy = Object.values(attributsPhy || {}).reduce(
+    (acc, val) => acc + val
+  );
+  const sumAttTec = Object.values(attributsTec || {}).reduce(
+    (acc, val) => acc + val
+  );
+  return (sumattPhy + sumAttTec) / 10;
+}
+
+// Capitalize funcion
 function Capitalize(str) {
-  if (typeof str === "string") return "";
-  return str.chartAt(0).toUpperCase() + str.slice(1);
+  if (typeof str === "string") {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 }

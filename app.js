@@ -7,9 +7,15 @@ const playerRoutes = require("./src/routes/playerRoutes");
 app.use(express.json());
 
 // Routes
-app.use("/api/players", playerRoutes);
-app.use("/api/players/:id", playerRoutes);
+app.use(playerRoutes);
 
+app.use(({ res }) => {
+  const message =
+    "impossible de trouver la ressource damandée ! vous pouvez essayer une autre URL.";
+  res.status(404).json({ message });
+});
+
+// Connexion à la base de données*
 sequelize
   .initDb()
   .then(() => {
