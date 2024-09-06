@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Player, User } = require("../db/sequelize");
 const privateKey = require("../auth/privateKey");
-const auth = require("../auth/auth");
 
 exports.findAllPlayers = async (req, res) => {
   if (req.query.name) {
@@ -14,6 +13,21 @@ exports.findAllPlayers = async (req, res) => {
       },
       limit: 5,
       order: ["name"],
+    }).then((player) => {
+      if (player.length === 0) {
+        return res.status(401).json({ message: "Joueur Introuvable" });
+      }
+      res.json({ data: player });
+    });
+  } else if (req.query.note) {
+    const note = parseFloat(req.query.note);
+    console.log(note);
+    
+    Player.findAll({
+      where: {
+        note: { [Op.lte]: note },
+      },
+      order: [["note"]],
     }).then((player) => {
       if (player.length === 0) {
         return res.status(401).json({ message: "Joueur Introuvable" });
@@ -107,21 +121,33 @@ exports.login = (req, res) => {
   User.findOne({ where: { username: req.body.username } })
     .then((user) => {
       if (!user) {
-        return res.json({ message: "L'utilisateur est introuvable" });
+        const message = "L'utilisateur demandé n'existe pas";
+        return res.status(404).json({ message });
       }
+
+      // bcrypt
       bcrypt
         .compare(req.body.password, user.password)
-        .then((isValidePassword) => {
-          if (!isValidePassword) {
-            const message = "Le mot de passe est incorrect";
-            res.json({ message });
+        .then((isValidPassword) => {
+          if (!isValidPassword) {
+            const message = "Le mot de passe n'est pas correct";
+            return res.status(401).json({ message });
           }
+
+          // jsonwebtoken
+          const token = jsonwebtoken.sign({ userId: user.id }, privateKey, {
+            expiresIn: "1h",
+          });
+          const message = "L'utilisateur est connecté avec succès";
+          return res.json({ message, data: user, token });
+        })
+        .catch((err) => {
+          const message = "Erreur lors de la vérification du mot de passe";
+          return res.status(500).json({ message, data: err });
         });
-      const token = jsonwebtoken.sign({ userId: user.id }, privateKey, {
-        expiresIn: "1h",
-      });
-      const message = "L'utilisateur a été connecté avec succes";
-      return res.json({ message, data: user, token });
     })
-    .catch((err) => {});
+    .catch((err) => {
+      const message = "Impossible de se connecter. Réessayez dans un instant.";
+      return res.status(500).json({ message, data: err });
+    });
 };

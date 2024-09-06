@@ -1,7 +1,8 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  return sequelize.define(
+  // Définition du modèle Player
+  const Player = sequelize.define(
     "Player",
     {
       id: {
@@ -14,21 +15,18 @@ module.exports = (sequelize) => {
         type: DataTypes.FLOAT,
         allowNull: true,
         validate: {
-          notEmpty: { msg: "Le champ note est require" },
+          notEmpty: { msg: "Le champ note est requis" },
           isNumeric: { msg: "Le champ note n'autorise que les nombres" },
         },
         get() {
-          return CalculNote(
-            this.attributs_Physiques,
-            this.attributs_Techniques
-          );
+          return CalculNote(this.attributs_Physiques, this.attributs_Techniques);
         },
       },
       name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "Le champ name est require" },
+          notEmpty: { msg: "Le champ name est requis" },
           notNumber(value) {
             const regex = /\d/;
             if (regex.test(value)) {
@@ -48,7 +46,7 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "Le champ pays est require" },
+          notEmpty: { msg: "Le champ pays est requis" },
           notNumber(value) {
             const regex = /\d/;
             if (regex.test(value)) {
@@ -68,7 +66,7 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "Le champ club est require" },
+          notEmpty: { msg: "Le champ club est requis" },
         },
         set(value) {
           if (typeof value === "string") {
@@ -82,7 +80,7 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "Le champ post est require" },
+          notEmpty: { msg: "Le champ post est requis" },
           notNumber(value) {
             const regex = /\d/;
             if (regex.test(value)) {
@@ -102,8 +100,8 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "Le champ âge est require" },
-          isInt: { msg: "Le champ âge n'autorise que les nombre entier" },
+          notEmpty: { msg: "Le champ âge est requis" },
+          isInt: { msg: "Le champ âge n'autorise que les nombres entiers" },
         },
       },
       attributs_Physiques: {
@@ -112,7 +110,7 @@ module.exports = (sequelize) => {
         validate: {
           isValidAttributs(value) {
             const keys = ["agilite", "endurance", "force", "vitesse"];
-            ValideAttributes(value, keys, "Techniques");
+            ValideAttributes(value, keys, "Physiques");
           },
         },
       },
@@ -122,9 +120,14 @@ module.exports = (sequelize) => {
         validate: {
           isValideAttributs(value) {
             const keys = ["controle_de_balle", "dribble", "passes", "tir"];
-            ValideAttributes(value, keys, "Physiques");
+            ValideAttributes(value, keys, "Techniques");
           },
         },
+      },
+      comment: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "comment",
       },
     },
     {
@@ -133,10 +136,20 @@ module.exports = (sequelize) => {
       updatedAt: false,
     }
   );
-};
-// Helper function
 
-// ValideAttributs function
+  // Hook pour calculer la note avant de sauvegarder
+  Player.beforeCreate((player) => {
+    player.note = CalculNote(player.attributs_Physiques, player.attributs_Techniques);
+  });
+
+  Player.beforeUpdate((player) => {
+    player.note = CalculNote(player.attributs_Physiques, player.attributs_Techniques);
+  });
+
+  return Player;
+};
+
+// Helper function
 function ValideAttributes(value, keys, type) {
   if (typeof value !== "object" || value === null) {
     throw new Error(`Les attributs ${type} doivent être un objet valide.`);
@@ -157,18 +170,20 @@ function ValideAttributes(value, keys, type) {
   }
 }
 
-// function calculnote
+// Fonction pour calculer la note
 function CalculNote(attributsPhy, attributsTec) {
   const sumattPhy = Object.values(attributsPhy || {}).reduce(
-    (acc, val) => acc + val
+    (acc, val) => acc + val,
+    0
   );
   const sumAttTec = Object.values(attributsTec || {}).reduce(
-    (acc, val) => acc + val
+    (acc, val) => acc + val,
+    0
   );
   return (sumattPhy + sumAttTec) / 10;
 }
 
-// Capitalize funcion
+// Fonction pour capitaliser les chaînes de caractères
 function Capitalize(str) {
   if (typeof str === "string") {
     return str.charAt(0).toUpperCase() + str.slice(1);
