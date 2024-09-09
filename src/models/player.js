@@ -19,7 +19,10 @@ module.exports = (sequelize) => {
           isNumeric: { msg: "Le champ note n'autorise que les nombres" },
         },
         get() {
-          return CalculNote(this.attributs_Physiques, this.attributs_Techniques);
+          return CalculNote(
+            this.attributs_Physiques,
+            this.attributs_Techniques
+          );
         },
       },
       name: {
@@ -139,11 +142,17 @@ module.exports = (sequelize) => {
 
   // Hook pour calculer la note avant de sauvegarder
   Player.beforeCreate((player) => {
-    player.note = CalculNote(player.attributs_Physiques, player.attributs_Techniques);
+    player.note = CalculNote(
+      player.attributs_Physiques,
+      player.attributs_Techniques
+    );
   });
 
   Player.beforeUpdate((player) => {
-    player.note = CalculNote(player.attributs_Physiques, player.attributs_Techniques);
+    player.note = CalculNote(
+      player.attributs_Physiques,
+      player.attributs_Techniques
+    );
   });
 
   return Player;

@@ -1,4 +1,4 @@
-const { ValidationError, Op } = require("sequelize");
+const { ValidationError, Op, literal } = require("sequelize");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Player, User } = require("../db/sequelize");
@@ -21,18 +21,20 @@ exports.findAllPlayers = async (req, res) => {
     });
   } else if (req.query.note) {
     const note = parseFloat(req.query.note);
-    console.log(note);
-    
-    Player.findAll({
-      where: {
-        note: { [Op.lte]: note },
-      },
-      order: [["note"]],
-    }).then((player) => {
-      if (player.length === 0) {
-        return res.status(401).json({ message: "Joueur Introuvable" });
+
+    // Vérifie que la note est un nombre valide
+    if (isNaN(note)) {
+      return res.status(400).json({ message: "La note fournie est invalide." });
+    }
+
+    Player.findAndCountAll({
+      where: literal(`ROUND(note, 1) <= ${note}`), // Utilise literal pour arrondir et comparer
+      order: [["note", "DESC"]],
+    }).then(({ count, rows }) => {
+      if (!count) {
+        return res.status(404).json({ message: "Joueur Introuvable" });
       }
-      res.json({ data: player });
+      res.json({ data: rows });
     });
   } else {
     Player.findAll({ order: ["name"] }).then((player) =>
@@ -46,6 +48,18 @@ exports.findOnePlayer = async (req, res) => {
   Player.findByPk(id).then((player) => {
     res.json({ data: player });
   });
+};
+
+exports.bestThreePlayers = async (req, res) => {
+  Player.findAll({
+    limit: 3,
+    order: [["note", "DESC"]],
+  })
+    .then((player) => {
+      const message = "Le top 3 des meilleurs notes";
+      res.json({ message: message, data: player });
+    })
+    .catch((err) => {});
 };
 
 exports.createPlayer = async (req, res) => {

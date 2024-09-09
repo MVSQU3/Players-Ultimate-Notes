@@ -15,7 +15,7 @@ app.use(({ res }) => {
   res.status(404).json({ message });
 });
 
-// Connexion à la base de données*
+// Connexion à la base de données
 sequelize
   .initDb()
   .then(() => {
