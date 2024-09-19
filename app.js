@@ -1,10 +1,16 @@
 const express = require("express");
 const app = express();
+const cors = require("cors");
 const port = 3000;
 const sequelize = require("./src/db/sequelize");
 const playerRoutes = require("./src/routes/playerRoutes");
 
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Remplace par l'URL de ton frontend si nécessaire
+  })
+);
 
 // Routes
 app.use(playerRoutes);
