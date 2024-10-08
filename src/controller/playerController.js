@@ -131,7 +131,7 @@ exports.deletePlayer = (req, res) => {
     });
 };
 
-exports.login = (req, res) => {
+exports.singIn = (req, res) => {
   User.findOne({ where: { username: req.body.username } })
     .then((user) => {
       if (!user) {
@@ -164,4 +164,19 @@ exports.login = (req, res) => {
       const message = "Impossible de se connecter. Réessayez dans un instant.";
       return res.status(500).json({ message, data: err });
     });
+};
+
+exports.singUp = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      username: username,
+      password: hash,
+    });
+    const message = "utilisateur créé avec success.";
+    return res.json({ message, data: user });
+  } catch (error) {
+    console.error("Impossible de crée l'utilisateur");
+  }
 };

@@ -230,5 +230,26 @@ const players = [
       tir: 9,
     },
   },
+  {
+    id: 12,
+    name: "Cristiano Ronaldo",
+    pays: "Portugal",
+    club: "Al Nassr",
+    post: "attaquant",
+    age: 39,
+    note: undefined,
+    attributs_Physiques: {
+      agilite: 9,
+      endurance: 9,
+      force: 10,
+      vitesse: 9,
+    },
+    attributs_Techniques: {
+      controle_de_balle: 9,
+      dribble: 8,
+      passes: 8,
+      tir: 10,
+    },
+  },
 ];
 module.exports = { players };

@@ -1,49 +1,54 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import PlayersList from "./components/PlayersList";
+import Login from "./components/Login";
+import Logup from "./components/Logup";
 
-const PlayersList = () => {
-  const [players, setPlayers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(
-      "jwtToken",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcyNjc4MTQwMywiZXhwIjoxNzI2Nzg1MDAzfQ.Bn4I-KIj_eSGWMo3ry6vKo7QKNV5B45aRtOpwJ7BNwQ"
-    );
     const token = localStorage.getItem("jwtToken");
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/players", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setPlayers(response.data.data);
-      } catch (err) {
-        setError("Erreur lors de la récupération des joueurs");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    if (token) {
+      setIsAuthenticated(true);
+    }
   }, []);
 
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>{error}</p>;
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleSignupSuccess = () => {
+    // Après une inscription réussie, on peut rediriger vers le login ou le rendre connecté directement
+    setShowSignup(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("jwtToken");
+    setIsAuthenticated(false);
+  };
+
+  const handleOnupdate = () => {
+    setIsAuthenticated(false);
+  }
 
   return (
-    <div>
-      <h1>Liste des Joueurs</h1>
-      <ul>
-        {players.length > 0 ? (
-          players.map((player) => <li key={player.id}> {player.name} </li>)
-        ) : (
-          <p>aucun joueurs trouver</p>
-        )}
-      </ul>
+    <div className="App">
+      {isAuthenticated ? (
+        <PlayersList onLogout={handleLogout} />
+      ) : showSignup ? (
+        <Logup onSignupSuccess={handleSignupSuccess} />
+      ) : (
+        <div className="">
+          <Login onLoginSuccess={handleLoginSuccess} />
+          <p className="w-50 m-auto">
+            Pas encore inscrit ?{" "}
+            <button className="btn btn-primary my-1 ps-1 pe-1" onClick={() => setShowSignup(true)}>Créer un compte</button>
+          </p>
+        </div>
+      )}
     </div>
   );
-};
+}
 
-export default PlayersList;
+export default App;

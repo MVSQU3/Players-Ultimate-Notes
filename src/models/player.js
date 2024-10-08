@@ -1,7 +1,6 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  // Définition du modèle Player
   const Player = sequelize.define(
     "Player",
     {
